@@ -50,7 +50,7 @@ def generate_config(rng, public, basic, config, initial=False):
 
 def make_echidna_process(prefix, rng, public_functions, base_config, config, initial=False):
     g = generate_config(rng, public_functions, base_config, config, initial=initial)
-    print("- LAUNCHING echidna-test in", prefix, "blacklisting [", ",".join(g["filterFunctions"]),
+    print("- LAUNCHING echidna-test in", prefix, "blacklisting [", ", ".join(g["filterFunctions"]),
             "] with seqLen", g["seqLen"])
     os.mkdir(prefix)
     with open(prefix + "/config.yaml", 'w') as yf:
