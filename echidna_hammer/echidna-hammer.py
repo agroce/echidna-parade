@@ -40,22 +40,14 @@ def generate_config(rng, public, basic, config, initial=False):
                     excluded.append(f)
             else:
                 excluded.append(f)
-    if len(excluded) == len(public):
-        # This should be quite rare unless you have very few functions or a very low config.prob!
-        print("Degenerate blacklist configuration, trying again...")
-        return generate_config(rng, public, basic, config, initial)
     new_config["filterFunctions"] = excluded
-    if not initial:
-        if rng.random() < 0.5:
-            new_config["seqLen"] = random.randrange(config.minseqLen, config.maxseqLen)
-
+    if 
     return new_config
 
 
 def make_echidna_process(prefix, rng, public_functions, base_config, config, initial=False):
     g = generate_config(rng, public_functions, base_config, config, initial=initial)
-    print("- LAUNCHING echidna-test in", prefix, "blacklisting [", ", ".join(g["filterFunctions"]),
-            "] with seqLen", g["seqLen"])
+    print("- LAUNCHING echidna-test with prefix", prefix, "blacklisting", g["filterFunctions"])
     os.mkdir(prefix)
     with open(prefix + "/config.yaml", 'w') as yf:
         yf.write(yaml.dump(g))
@@ -89,12 +81,8 @@ def parse_args():
                         help='Per-generation testing time (default = 300)')        
     parser.add_argument('--seed', type=int, default=None,
                         help='Random seed (default = None).')
-    parser.add_argument('--minseqLen', type=int, default=10,
-                        help='Minimum sequence length to use (default 10).')    
-    parser.add_argument('--maxseqLen', type=int, default=300,
-                        help='Maximum sequence length to use (default 300).')    
     parser.add_argument('--prob', type=float, default=0.5,
-                        help='Probability of including functions in swarm config (default = 0.5).')
+                        help='Probability of including function in swarm config (default = 0.5).')
     parser.add_argument('--always', type=str, nargs='+', default=None,
                         help='functions to ALWAYS include in swarm configurations')
     parsed_args = parser.parse_args(sys.argv[1:])
@@ -128,32 +116,8 @@ def main():
     else:
         os.mkdir(config.name)
 
-    print()
-    print("Results will be written to:", os.path.abspath(config.name))
-
     rng = random.Random(config.seed)
 
-    base_config = {}
-    y = yaml.safe_load(config.config)
-    for key in y:
-        if key not in ["timeout", "testLimit", "stopOnFail", "corpusDir", "coverage"]:
-            base_config[key] = y[key]
-    base_config["timeout"] = config.gen_time
-    if "seqLen" not in base_config:
-        base_config["seqLen"] = min(max(config.minseqLen, 100), config.maxseqLen)
-    if config.corpus_dir is not None:
-        base_config["corpusDir"] = config.corpus_dir
-    else:
-        base_config["corpusDir"] = os.path.abspath(config.name + "/corpus")
-    base_config["stopOnFail"] = False
-    base_config["coverage"] = True
-    if not os.path.exists(base_config["corpusDir"]):
-        os.mkdir(base_config["corpusDir"])
-
-    prop_prefix = "echidna_"
-    if "prefix" in base_config:
-        prop_prefix = base_config["prefix"]
-        
     public_functions = []
     for f in config.files:
         if not os.path.exists(f):
@@ -173,22 +137,33 @@ def main():
                         in_functions = False
                     elif len(ls) > 2:
                         fname = ls[1].split("(")[0]
-                        if fname.find(prop_prefix) == 0:
-                            continue
                         visibility = ls[3]
                         if visibility in ["public", "external"]:
                             public_functions.append(fname)
                 if len(ls) > 1:
                     if ls[1] == "Function":
                         in_functions = True
+    print("public functions:", public_functions)
 
-    print("Identified", len(public_functions), "public functions:", ", ".join(public_functions))
+    base_config = {}
+    y = yaml.safe_load(config.config)
+    for key in y:
+        if key not in ["timeout", "testLimit", "stopOnFail", "corpusDir", "coverage"]:
+            base_config[key] = y[key]
+    base_config["timeout"] = config.gen_time
+    if config.corpus_dir is not None:
+        base_config["corpusDir"] = config.corpus_dir
+    else:
+        base_config["corpusDir"] = os.path.abspath(config.name + "/corpus")
+    base_config["stopOnFail"] = False
+    base_config["coverage"] = True
+    if not os.path.exists(base_config["corpusDir"]):
+        os.mkdir(base_config["corpusDir"])
 
     failures = []
     start = time.time()
     elapsed = time.time() - start
-
-    print()
+    
     print("RUNNING INITIAL CORPUS GENERATION")
     prefix = config.name + "/initial"
     (pname, p, outf) = make_echidna_process(prefix, rng, public_functions, base_config, config, initial=True)
@@ -201,7 +176,6 @@ def main():
     generation = 1
     elapsed = time.time() - start
     while elapsed < config.timeout:
-        print()
         print("SWARM GENERATION #" + str(generation))
         ps = []
         for i in range(config.ncores):
@@ -224,7 +198,7 @@ def main():
             for d in done:
                 ps.remove(d)
             gen_elapsed = time.time() - gen_start
-            if gen_elapsed > (config.gen_time + 30): # full 30 second fudge factor here!
+            if gen_elapsed > (config.gen_time + 10): # 10 second fudge factor here!
                 print("Generation still running after timeout!")
                 for (pname, p, outf) in ps:
                     outf.close()
