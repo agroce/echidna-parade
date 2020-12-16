@@ -5,7 +5,6 @@ from collections import namedtuple
 import multiprocessing
 import os
 import random
-import slither
 import subprocess
 import sys
 import time
@@ -55,7 +54,7 @@ def generate_config(rng, public, basic, config, initial=False):
 def make_echidna_process(prefix, rng, public_functions, base_config, config, initial=False):
     g = generate_config(rng, public_functions, base_config, config, initial=initial)
     print("- LAUNCHING echidna-test in", prefix, "blacklisting [", ", ".join(g["filterFunctions"]),
-            "] with seqLen", g["seqLen"])
+          "] with seqLen", g["seqLen"])
     os.mkdir(prefix)
     with open(prefix + "/config.yaml", 'w') as yf:
         yf.write(yaml.dump(g))
@@ -63,10 +62,21 @@ def make_echidna_process(prefix, rng, public_functions, base_config, config, ini
         call = ["echidna-test"]
     call.extend(config.files)
     call.extend(["--config", "config.yaml"])
-    if "config.contract" is not None:
+    if config.contract is not None:
         call.extend(["--contract", config.contract])
         call.extend(["--format", "text"])
     return (prefix, subprocess.Popen(call, stdout=outf, stderr=outf, cwd=os.path.abspath(prefix)), outf)
+
+
+def process_failures(failed_props, prefix):
+    with open(prefix + "/echidna.out", 'r') as ffile:
+        for line in ffile:
+            if "failed" in line[:-1]:
+                if line[:-1] not in failed_props:
+                    print("NEW FAILURE:", line[:-1])
+                    failed_props[line[:-1]] = [prefix]
+                else:
+                    failed_props[line[:-1]].append(prefix)
 
 
 def parse_args():
@@ -74,7 +84,7 @@ def parse_args():
     parser.add_argument('files', type=os.path.abspath, nargs='+', default=None,
                         help='FILES argument for echidna-test')
     parser.add_argument('--name', type=str, default="hammer." + str(os.getpid()),
-                        help='name for hammer (directory where output files are placed)')    
+                        help='name for hammer (directory where output files are placed)')
     parser.add_argument('--contract', type=str, default=None,
                         help='CONTRACT argument for echidna-test')
     parser.add_argument('--config', type=argparse.FileType('r'), default=None,
@@ -86,13 +96,13 @@ def parse_args():
     parser.add_argument('--timeout', type=int, default=3600,
                         help='Total testing time (default = 3600)')
     parser.add_argument('--gen_time', type=int, default=3600,
-                        help='Per-generation testing time (default = 300)')        
+                        help='Per-generation testing time (default = 300)')
     parser.add_argument('--seed', type=int, default=None,
                         help='Random seed (default = None).')
     parser.add_argument('--minseqLen', type=int, default=10,
-                        help='Minimum sequence length to use (default 10).')    
+                        help='Minimum sequence length to use (default 10).')
     parser.add_argument('--maxseqLen', type=int, default=300,
-                        help='Maximum sequence length to use (default 300).')    
+                        help='Maximum sequence length to use (default 300).')
     parser.add_argument('--prob', type=float, default=0.5,
                         help='Probability of including functions in swarm config (default = 0.5).')
     parser.add_argument('--always', type=str, nargs='+', default=None,
@@ -153,12 +163,12 @@ def main():
     prop_prefix = "echidna_"
     if "prefix" in base_config:
         prop_prefix = base_config["prefix"]
-        
+
     public_functions = []
     for f in config.files:
         if not os.path.exists(f):
             raise ValueError('Specified file ' + f + ' does not exist!')
-        with open (".slither-output", 'w') as sout:
+        with open(".slither-output", 'w') as sout:
             subprocess.call(["slither", f, "--print", "function-summary"], stdout=sout, stderr=sout)
         in_functions = False
         delim_count = 0
@@ -168,7 +178,7 @@ def main():
                 if in_functions:
                     if len(ls) > 0:
                         if ls[0].find("+-") == 0:
-                            delim_count +=1
+                            delim_count += 1
                     if delim_count == 2:
                         in_functions = False
                     elif len(ls) > 2:
@@ -185,6 +195,7 @@ def main():
     print("Identified", len(public_functions), "public functions:", ", ".join(public_functions))
 
     failures = []
+    failed_props = {}
     start = time.time()
     elapsed = time.time() - start
 
@@ -193,11 +204,12 @@ def main():
     prefix = config.name + "/initial"
     (pname, p, outf) = make_echidna_process(prefix, rng, public_functions, base_config, config, initial=True)
     p.wait()
+    outf.close()
     if p.returncode != 0:
         print(pname, "FAILED")
+        process_failures(failed_props, pname)
         failures.append(pname + "/echidna.out")
-    outf.close()
-        
+
     generation = 1
     elapsed = time.time() - start
     while elapsed < config.timeout:
@@ -220,11 +232,12 @@ def main():
                     outf.close()
                     if p.returncode != 0:
                         print(pname, "FAILED")
+                        process_failures(failed_props, pname)
                         failures.append(pname + "/echidna.out")
             for d in done:
                 ps.remove(d)
             gen_elapsed = time.time() - gen_start
-            if gen_elapsed > (config.gen_time + 30): # full 30 second fudge factor here!
+            if gen_elapsed > (config.gen_time + 30):  # full 30 second fudge factor here!
                 print("Generation still running after timeout!")
                 for (pname, p, outf) in ps:
                     outf.close()
@@ -234,11 +247,20 @@ def main():
         elapsed = time.time() - start
         generation += 1
     print("DONE!")
+    print()
     if len(failures) == 0:
+        print("NO FAILURES")
         sys.exit(0)
     else:
-        for f in failures:
-            print("See ", f, " for details on failing test(s).")
+        print("SOME TESTS FAILED")
+        print()
+        print("Property results:")
+        for prop in sorted(failed_props.keys(), key=lambda x: len(failed_props[x])):
+            print("="*40)
+            print(prop)
+            print("FAILED", len(failed_props[prop]), "TIMES")
+            print("See:", ", ".join(map(lambda p: p+"/echidna.out", failed_props[prop])))
+
         sys.exit(len(failures))
 
 

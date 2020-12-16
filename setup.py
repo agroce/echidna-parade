@@ -25,6 +25,8 @@ setup(
       ],
     install_requires=[
       'pyyaml',
+      'slither-analyzer',
+      'crytic-compile'
     ],
     url='https://github.com/agroce/echidna-hammer',
 )
