@@ -26,6 +26,13 @@ contract TEST {
     }
   }
 
+  function decimate() public {
+    uint alen = add_array.length;
+    for (uint i = 0; i < ((alen*9)/10); i++) {
+      add_array.pop();
+    }
+  }  
+
   function empty() public {
     delete add_array;
   }
