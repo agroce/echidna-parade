@@ -21,6 +21,13 @@ contract TEST {
     }
   }
 
+  function plus5() public {
+    uint alen = add_array.length;
+    for (uint i = 0; i < 5; i++) {
+      add_array.push();
+    }
+  }
+
   function halve() public {
     uint alen = add_array.length;
     for (uint i = 0; i < (alen/2); i++) {
@@ -35,7 +42,15 @@ contract TEST {
     }
   }  
 
-  function empty() public {
+  function empty1() public {
+    delete add_array;
+  }
+
+  function empty2() public {
+    delete add_array;
+  }
+
+  function empty3() public {
     delete add_array;
   }
 
@@ -55,24 +70,8 @@ contract TEST {
     }
   }
 
-  function test_long_16() public view {
-    if (add_array.length >= 16) {
-      if (lengthChecking) {
-	assert(false);
-      }
-    }
-  }
-
-  function test_long_32() public view {
-    if (add_array.length >= 32) {
-      if (lengthChecking) {
-	assert(false);
-      }
-    }
-  }
-
   function test_long_64() public view {
-    if (add_array.length >= 64) {
+    if (add_array.length >= 128) {
       if (lengthChecking) {
 	assert(false);
       }
@@ -85,5 +84,5 @@ contract TEST {
 	assert(false);
       }
     }
-  }  
+  }
 }

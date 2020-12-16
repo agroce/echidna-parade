@@ -214,7 +214,7 @@ def main():
     elapsed = time.time() - start
     while elapsed < config.timeout:
         print()
-        print("SWARM GENERATION #" + str(generation))
+        print("SWARM GENERATION #" + str(generation) + ": ELAPSED TIME", round(elapsed, 2), "SECONDS /", config.timeout)
         ps = []
         for i in range(config.ncores):
             prefix = config.name + "/gen." + str(generation) + "." + str(i)
