@@ -9,7 +9,9 @@ contract TEST {
   }
 
   function pop_1() public {
-    add_array.pop();
+    if (add_array.length > 0) {
+      add_array.pop();
+    }
   }
 
   function double() public {
