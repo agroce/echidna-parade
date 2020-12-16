@@ -105,7 +105,7 @@ def parse_args():
                         help='Maximum sequence length to use (default 300).')
     parser.add_argument('--prob', type=float, default=0.5,
                         help='Probability of including functions in swarm config (default = 0.5).')
-    parser.add_argument('--always', type=str, nargs='+', default=None,
+    parser.add_argument('--always', type=str, nargs='+', default=[],
                         help='functions to ALWAYS include in swarm configurations')
     parsed_args = parser.parse_args(sys.argv[1:])
     return (parsed_args, parser)
