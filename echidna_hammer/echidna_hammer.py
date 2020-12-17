@@ -95,7 +95,7 @@ def parse_args():
                         help='Directory to store the echidna-hammer corpus (useful when existing corpus available)')
     parser.add_argument('--timeout', type=int, default=3600,
                         help='Total testing time (default = 3600)')
-    parser.add_argument('--gen_time', type=int, default=3600,
+    parser.add_argument('--gen_time', type=int, default=300,
                         help='Per-generation testing time (default = 300)')
     parser.add_argument('--seed', type=int, default=None,
                         help='Random seed (default = None).')
