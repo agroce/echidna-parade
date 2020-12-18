@@ -83,8 +83,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('files', type=os.path.abspath, nargs='+', default=None,
                         help='FILES argument for echidna-test')
-    parser.add_argument('--name', type=str, default="hammer." + str(os.getpid()),
-                        help='name for hammer (directory where output files are placed)')
+    parser.add_argument('--name', type=str, default="parade." + str(os.getpid()),
+                        help='name for parade (directory where output files are placed)')
     parser.add_argument('--contract', type=str, default=None,
                         help='CONTRACT argument for echidna-test')
     parser.add_argument('--config', type=argparse.FileType('r'), default=None,
@@ -92,7 +92,7 @@ def parse_args():
     parser.add_argument('--ncores', type=int, default=multiprocessing.cpu_count(),
                         help='Number of cores to use (swarm instances to run in parallel (default = all available)')
     parser.add_argument('--corpus_dir', type=os.path.abspath, default=None,
-                        help='Directory to store the echidna-hammer corpus (useful when existing corpus available)')
+                        help='Directory to store the echidna-parade corpus (useful when existing corpus available)')
     parser.add_argument('--timeout', type=int, default=3600,
                         help='Total testing time (default = 3600)')
     parser.add_argument('--gen_time', type=int, default=300,
@@ -131,7 +131,7 @@ def make_config(pargs, parser):
 def main():
     parsed_args, parser = parse_args()
     config = make_config(parsed_args, parser)
-    print("Starting echidna-hammer with config={}".format(config))
+    print("Starting echidna-parade with config={}".format(config))
 
     if os.path.exists(config.name):
         raise ValueError(config.name + ": refusing to overwrite existing directory!")
