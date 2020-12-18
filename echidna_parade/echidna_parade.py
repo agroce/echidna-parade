@@ -39,7 +39,7 @@ def generate_config(rng, public, basic, config, initial=False):
                     excluded.append(f)
             else:
                 excluded.append(f)
-    if len(excluded) == len(public):
+    if (len(excluded) == len(public)) and (len(public) > 0):
         # This should be quite rare unless you have very few functions or a very low config.prob!
         print("Degenerate blacklist configuration, trying again...")
         return generate_config(rng, public, basic, config, initial)
@@ -164,16 +164,18 @@ def main():
     if "prefix" in base_config:
         prop_prefix = base_config["prefix"]
 
+    slither_out = ""
     public_functions = []
     for f in config.files:
         if not os.path.exists(f):
             raise ValueError('Specified file ' + f + ' does not exist!')
-        with open(".slither-output", 'w') as sout:
+        with open(config.name + "/.slither.run", 'w') as sout:
             subprocess.call(["slither", f, "--print", "function-summary"], stdout=sout, stderr=sout)
         in_functions = False
         delim_count = 0
-        with open(".slither-output", 'r') as sout:
+        with open(config.name + "/.slither.run", 'r') as sout:
             for line in sout:
+                slither_out += line
                 ls = line.split()
                 if in_functions:
                     if len(ls) > 0:
@@ -192,12 +194,24 @@ def main():
                     if ls[1] == "Function":
                         in_functions = True
 
+    with open(config.name + "/slither_out.txt", 'w') as sout:
+        sout.write(slither_out)
+
     print("Identified", len(public_functions), "public functions:", ", ".join(public_functions))
+    if len(public_functions) == 0:
+        print("WARNING: something may be wrong; no public functions were found!")
+        print("SLITHER OUTPUT:")
+        print(slither_out)
+        print()
 
     failures = []
     failed_props = {}
     start = time.time()
     elapsed = time.time() - start
+
+    if "Traceback" in slither_out:
+        print("WARNING: Something went wrong with slither, so testing may fail.  See",
+              config.name + "/slither_out.txt")
 
     print()
     print("RUNNING INITIAL CORPUS GENERATION")
