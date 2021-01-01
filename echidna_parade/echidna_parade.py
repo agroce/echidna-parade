@@ -47,10 +47,10 @@ def generate_config(rng, public, basic, bases, config, initial=False):
     if not initial:
         if rng.random() < config.PdefaultLen:
             new_config["seqLen"] = random.randrange(config.minseqLen, config.maxseqLen)
-		if bases:
-			base = rng.choose(bases)
-			for k in base:
-				new_config[k] = base[k]
+        if bases:
+            base = rng.choose(bases)
+            for k in base:
+                new_config[k] = base[k]
 
     return new_config
 
@@ -93,8 +93,8 @@ def parse_args():
                         help='CONTRACT argument for echidna-test')
     parser.add_argument('--config', type=argparse.FileType('r'), default=None,
                         help='CONFIG argument for echidna-test')
-	parser.add_argument('--bases', type=argparse.FileType('r'), default=None,
-						help='file containing a list of additional configuration files to randomly choose among for non-initial runs')
+    parser.add_argument('--bases', type=argparse.FileType('r'), default=None,
+                        help='file containing a list of additional configuration files to randomly choose among for non-initial runs')
     parser.add_argument('--ncores', type=int, default=multiprocessing.cpu_count(),
                         help='Number of cores to use (swarm instances to run in parallel (default = all available)')
     parser.add_argument('--corpus_dir', type=os.path.abspath, default=None,
@@ -109,8 +109,8 @@ def parse_args():
                         help='Minimum sequence length to use (default = 10).')
     parser.add_argument('--maxseqLen', type=int, default=300,
                         help='Maximum sequence length to use (default = 300).')
-	parser.add_argument('--PdefaultLen', type=float, default=0.5,
-						help="Probability of using default/base length (default = 0.5)")
+    parser.add_argument('--PdefaultLen', type=float, default=0.5,
+                        help="Probability of using default/base length (default = 0.5)")
     parser.add_argument('--prob', type=float, default=0.5,
                         help='Probability of including functions in swarm config (default = 0.5).')
     parser.add_argument('--always', type=str, nargs='+', default=[],
@@ -168,13 +168,13 @@ def main():
     if not os.path.exists(base_config["corpusDir"]):
         os.mkdir(base_config["corpusDir"])
 	
-	bases = []
-	if config.bases is not None:
-		with open(config.bases, 'r') as bfile:
-			for line in bfile:
-				base = line[:-1]
-				y = yaml.safe_load(base)
-				bases.append(y)
+    bases = []
+    if config.bases is not None:
+        with open(config.bases, 'r') as bfile:
+            for line in bfile:
+                base = line[:-1]
+                y = yaml.safe_load(base)
+                bases.append(y)
 
     prop_prefix = "echidna_"
     if "prefix" in base_config:
