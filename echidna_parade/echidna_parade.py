@@ -11,7 +11,7 @@ import time
 import yaml
 
 
-def generate_config(rng, public, basic, config, initial=False):
+def generate_config(rng, public, basic, bases, config, initial=False):
     new_config = dict(basic)
     new_config["filterFunctions"] = []
     new_config["filterBlacklist"] = True
@@ -42,17 +42,21 @@ def generate_config(rng, public, basic, config, initial=False):
     if (len(excluded) == len(public)) and (len(public) > 0):
         # This should be quite rare unless you have very few functions or a very low config.prob!
         print("Degenerate blacklist configuration, trying again...")
-        return generate_config(rng, public, basic, config, initial)
+        return generate_config(rng, public, basic, bases, config, initial)
     new_config["filterFunctions"] = excluded
     if not initial:
-        if rng.random() < 0.5:
+        if rng.random() < config.PdefaultLen:
             new_config["seqLen"] = random.randrange(config.minseqLen, config.maxseqLen)
+		if bases:
+			base = rng.choose(bases)
+			for k in base:
+				new_config[k] = base[k]
 
     return new_config
 
 
-def make_echidna_process(prefix, rng, public_functions, base_config, config, initial=False):
-    g = generate_config(rng, public_functions, base_config, config, initial=initial)
+def make_echidna_process(prefix, rng, public_functions, base_config, bases, config, initial=False):
+    g = generate_config(rng, public_functions, base_config, bases, config, initial=initial)
     print("- LAUNCHING echidna-test in", prefix, "blacklisting [", ", ".join(g["filterFunctions"]),
           "] with seqLen", g["seqLen"])
     os.mkdir(prefix)
@@ -89,6 +93,8 @@ def parse_args():
                         help='CONTRACT argument for echidna-test')
     parser.add_argument('--config', type=argparse.FileType('r'), default=None,
                         help='CONFIG argument for echidna-test')
+	parser.add_argument('--bases', type=argparse.FileType('r'), default=None,
+						help='file containing a list of additional configuration files to randomly choose among for non-initial runs')
     parser.add_argument('--ncores', type=int, default=multiprocessing.cpu_count(),
                         help='Number of cores to use (swarm instances to run in parallel (default = all available)')
     parser.add_argument('--corpus_dir', type=os.path.abspath, default=None,
@@ -100,9 +106,11 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=None,
                         help='Random seed (default = None).')
     parser.add_argument('--minseqLen', type=int, default=10,
-                        help='Minimum sequence length to use (default 10).')
+                        help='Minimum sequence length to use (default = 10).')
     parser.add_argument('--maxseqLen', type=int, default=300,
-                        help='Maximum sequence length to use (default 300).')
+                        help='Maximum sequence length to use (default = 300).')
+	parser.add_argument('--PdefaultLen', type=float, default=0.5,
+						help="Probability of using default/base length (default = 0.5)")
     parser.add_argument('--prob', type=float, default=0.5,
                         help='Probability of including functions in swarm config (default = 0.5).')
     parser.add_argument('--always', type=str, nargs='+', default=[],
@@ -159,6 +167,14 @@ def main():
     base_config["coverage"] = True
     if not os.path.exists(base_config["corpusDir"]):
         os.mkdir(base_config["corpusDir"])
+	
+	bases = []
+	if config.bases is not None:
+		with open(config.bases, 'r') as bfile:
+			for line in bfile:
+				base = line[:-1]
+				y = yaml.safe_load(base)
+				bases.append(y)
 
     prop_prefix = "echidna_"
     if "prefix" in base_config:
@@ -216,7 +232,7 @@ def main():
     print()
     print("RUNNING INITIAL CORPUS GENERATION")
     prefix = config.name + "/initial"
-    (pname, p, outf) = make_echidna_process(prefix, rng, public_functions, base_config, config, initial=True)
+    (pname, p, outf) = make_echidna_process(prefix, rng, public_functions, base_config, bases, config, initial=True)
     p.wait()
     outf.close()
     if p.returncode != 0:
@@ -232,7 +248,7 @@ def main():
         ps = []
         for i in range(config.ncores):
             prefix = config.name + "/gen." + str(generation) + "." + str(i)
-            ps.append(make_echidna_process(prefix, rng, public_functions, base_config, config))
+            ps.append(make_echidna_process(prefix, rng, public_functions, base_config, bases, config))
         any_not_done = True
         gen_start = time.time()
         while any_not_done:
