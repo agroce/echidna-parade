@@ -272,12 +272,14 @@ def main():
                 else:
                     done.append((pname, p, outf))
                     outf.close()
+                    for f in glob.glob(pname + "/corpus/coverage/*.txt"):
+                        if not os.path.exists(base_config["corpusDir"] + "/coverage/" + os.path.basename(f)):
+                            print("COLLECTING NEW COVERAGE:", f)
+                            shutil.copy(f, base_config["corpusDir"] + "/coverage")
                     if p.returncode != 0:
                         print(pname, "FAILED")
                         process_failures(failed_props, pname)
                         failures.append(pname + "/echidna.out")
-                    for f in glob.glob(prefix + "/corpus/coverage/*.txt"):
-                        shutil.copy(f, base_config["corpusDir"] + "/coverage")
             for d in done:
                 ps.remove(d)
             gen_elapsed = time.time() - gen_start
@@ -285,6 +287,10 @@ def main():
                 print("Generation still running after timeout!")
                 for (pname, p, outf) in ps:
                     outf.close()
+                    for f in glob.glob(pname + "/corpus/coverage/*.txt"):
+                        if not os.path.exists(base_config["corpusDir"] + "/coverage/" + os.path.basename(f)):
+                            print("COLLECTING NEW COVERAGE:", f)
+                            shutil.copy(f, base_config["corpusDir"] + "/coverage")
                     if p.poll() is None:
                         p.kill()
                 any_not_done = False
