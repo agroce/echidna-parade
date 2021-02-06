@@ -27,7 +27,7 @@ Try out the example in the 'examples' directory.  Compare:
 vs. what you can get with some knowledge of which functions not to omit from tests, and the same 120 seconds of testing with fast swarm generations:
 
 ```
-echidna-parade justlen.sol --config config.yaml --contract TEST --timeout 120 --gen_time 30 --ncores 8 --always 'TEST.turn_on_length_checking()" "TEST.push_1()" "TEST.plus5()" "TEST.test_long_64()" "TEST.test_long_128()"
+echidna-parade justlen.sol --config config.yaml --contract TEST --timeout 120 --gen_time 30 --ncores 8 --always "TEST.turn_on_length_checking()" "TEST.push_1()" "TEST.plus5()" "TEST.test_long_64()" "TEST.test_long_128()"
 Starting echidna-parade with config=Config(files=['/Users/adg326/echidna-parade/examples/justlen.sol'], name='parade.82538', contract='TEST', config=<_io.TextIOWrapper name='config.yaml' mode='r' encoding='UTF-8'>, ncores=8, corpus_dir=None, timeout=120, gen_time=30, seed=None, minseqLen=10, maxseqLen=300, prob=0.5, always=['turn_on_length_checking', 'push_1', 'plus5', 'test_long_64', 'test_long_128'])
 
 Results will be written to: /Users/adg326/echidna-parade/examples/parade.82538
