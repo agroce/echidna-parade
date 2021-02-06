@@ -277,7 +277,7 @@ def main():
                         process_failures(failed_props, pname)
                         failures.append(pname + "/echidna.out")
                     for f in glob.glob(prefix + "/corpus/coverage/*.txt"):
-                        shutil.copy(f, base_config["corpusDir"])
+                        shutil.copy(f, base_config["corpusDir"] + "/coverage")
             for d in done:
                 ps.remove(d)
             gen_elapsed = time.time() - gen_start
