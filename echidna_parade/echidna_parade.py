@@ -198,8 +198,11 @@ def main():
             subprocess.call(["slither", f, "--print", "function-summary"], stdout=sout, stderr=sout)
         in_functions = False
         delim_count = 0
+        the_contract = config.contract
         with open(config.name + "/.slither.run", 'r') as sout:
             for line in sout:
+                if line.startswith("Contract ") and ("vars" not in line):
+                    the_contract = line.split()[-1]
                 slither_out += line
                 ls = line.split()
                 if in_functions:
@@ -209,12 +212,12 @@ def main():
                     if delim_count == 2:
                         in_functions = False
                     elif len(ls) > 2:
-                        fname = ls[1].split("(")[0]
+                        fname = ls[1]
                         if fname.find(prop_prefix) == 0:
                             continue
                         visibility = ls[3]
                         if visibility in ["public", "external"]:
-                            public_functions.append(fname)
+                            public_functions.append(the_contract + "." + fname)
                 if len(ls) > 1:
                     if ls[1] == "Function":
                         in_functions = True
