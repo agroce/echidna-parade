@@ -2,16 +2,18 @@ from __future__ import print_function
 
 import argparse
 from collections import namedtuple
+import glob
 import multiprocessing
 import os
 import random
+import shutil
 import subprocess
 import sys
 import time
 import yaml
 
 
-def generate_config(rng, public, basic, bases, config, initial=False):
+def generate_config(rng, public, basic, bases, config, prefix=None, initial=False):
     new_config = dict(basic)
     new_config["filterFunctions"] = []
     new_config["filterBlacklist"] = True
@@ -42,9 +44,10 @@ def generate_config(rng, public, basic, bases, config, initial=False):
     if (len(excluded) == len(public)) and (len(public) > 0):
         # This should be quite rare unless you have very few functions or a very low config.prob!
         print("Degenerate blacklist configuration, trying again...")
-        return generate_config(rng, public, basic, bases, config, initial)
+        return generate_config(rng, public, basic, bases, config, prefix, initial)
     new_config["filterFunctions"] = excluded
     if not initial:
+        new_config["corpusDir"] = "corpus"
         if rng.random() < config.PdefaultLen:
             new_config["seqLen"] = random.randrange(config.minseqLen, config.maxseqLen)
         if bases:
@@ -56,10 +59,16 @@ def generate_config(rng, public, basic, bases, config, initial=False):
 
 
 def make_echidna_process(prefix, rng, public_functions, base_config, bases, config, initial=False):
-    g = generate_config(rng, public_functions, base_config, bases, config, initial=initial)
+    g = generate_config(rng, public_functions, base_config, bases, config, prefix=prefix,
+                        initial=initial)
     print("- LAUNCHING echidna-test in", prefix, "blacklisting [", ", ".join(g["filterFunctions"]),
           "] with seqLen", g["seqLen"])
     os.mkdir(prefix)
+    if not initial:
+        os.mkdir(prefix + "/corpus")
+        os.mkdir(prefix + "/corpus/coverage")
+        for f in glob.glob(base_config["corpusDir"] + "/coverage/*.txt"):
+            shutil.copy(f, prefix + "/corpus/coverage/")
     with open(prefix + "/config.yaml", 'w') as yf:
         yf.write(yaml.dump(g))
         outf = open(prefix + "/echidna.out", 'w')
@@ -264,6 +273,8 @@ def main():
                         print(pname, "FAILED")
                         process_failures(failed_props, pname)
                         failures.append(pname + "/echidna.out")
+                    for f in glob.glob(prefix + "/corpus/coverage/*.txt"):
+                        shutil.copy(f, base_config["corpusDir"])
             for d in done:
                 ps.remove(d)
             gen_elapsed = time.time() - gen_start
