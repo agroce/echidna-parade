@@ -7,6 +7,7 @@ import multiprocessing
 import os
 import random
 import shutil
+from slither import Slither
 import subprocess
 import sys
 import time
@@ -189,57 +190,28 @@ def main():
     if "prefix" in base_config:
         prop_prefix = base_config["prefix"]
 
-    slither_out = ""
     public_functions = []
     for f in config.files:
         if not os.path.exists(f):
             raise ValueError('Specified file ' + f + ' does not exist!')
-        with open(config.name + "/.slither.run", 'w') as sout:
-            subprocess.call(["slither", f, "--print", "function-summary"], stdout=sout, stderr=sout)
-        in_functions = False
-        delim_count = 0
-        the_contract = config.contract
-        with open(config.name + "/.slither.run", 'r') as sout:
-            for line in sout:
-                if line.startswith("Contract ") and ("vars" not in line):
-                    the_contract = line.split()[-1]
-                slither_out += line
-                ls = line.split()
-                if in_functions:
-                    if len(ls) > 0:
-                        if ls[0].find("+-") == 0:
-                            delim_count += 1
-                    if delim_count == 2:
-                        in_functions = False
-                    elif len(ls) > 2:
-                        fname = ls[1]
-                        if fname.find(prop_prefix) == 0:
-                            continue
-                        visibility = ls[3]
-                        if visibility in ["public", "external"]:
-                            public_functions.append(the_contract + "." + fname)
-                if len(ls) > 1:
-                    if ls[1] == "Function":
-                        in_functions = True
+        slither = Slither(f)
+        for contract in slither.contracts:
+            for function in contract.functions:
+                fname = function.full_name
+                if fname.find(prop_prefix) == 0:
+                    continue
+                if function.visibility in ["public", "external"]:
+                    public_functions.append(contract.name + "." + fname)
 
-    with open(config.name + "/slither_out.txt", 'w') as sout:
-        sout.write(slither_out)
-
-    print("Identified", len(public_functions), "public functions:", ", ".join(public_functions))
+    print("Identified", len(public_functions), "public and external functions:", ", ".join(public_functions))
     if len(public_functions) == 0:
-        print("WARNING: something may be wrong; no public functions were found!")
-        print("SLITHER OUTPUT:")
-        print(slither_out)
+        print("WARNING: something may be wrong; no public or external functions were found!")
         print()
 
     failures = []
     failed_props = {}
     start = time.time()
     elapsed = time.time() - start
-
-    if "Traceback" in slither_out:
-        print("WARNING: Something went wrong with slither, so testing may fail.  See",
-              config.name + "/slither_out.txt")
 
     print()
     print("RUNNING INITIAL CORPUS GENERATION")
