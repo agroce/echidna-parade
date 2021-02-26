@@ -200,7 +200,7 @@ def main():
             raise ValueError('Specified file ' + f + ' does not exist!')
         slither = Slither(f)
         for contract in slither.contracts:
-            for function in contract.functions:
+            for function in contract.functions_entry_points:
                 fname = function.full_name
                 if function.is_constructor or (fname.find(prop_prefix) == 0):
                     # Don't bother blacklisting constructors or echidna properties
