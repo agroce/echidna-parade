@@ -201,6 +201,8 @@ def main():
         slither = Slither(f)
         for contract in slither.contracts:
             for function in contract.functions_entry_points:
+                if not function.is_implemented:
+                    continue
                 fname = function.full_name
                 if function.is_constructor or (fname.find(prop_prefix) == 0):
                     # Don't bother blacklisting constructors or echidna properties
