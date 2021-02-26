@@ -49,6 +49,10 @@ def generate_config(rng, public, basic, bases, config, prefix=None, initial=Fals
     new_config["filterFunctions"] = excluded
     if not initial:
         new_config["corpusDir"] = "corpus"
+        new_config["mutConsts"] = []
+        for i in range(4):
+            # The below is pretty ad-hoc, you can uses bases to over-ride
+            new_config["mutConsts"].append(random.choice([0, 1, 2, 3, 1000, 2000]))
         if rng.random() < config.PdefaultLen:
             new_config["seqLen"] = random.randrange(config.minseqLen, config.maxseqLen)
         if bases:
@@ -63,7 +67,7 @@ def make_echidna_process(prefix, rng, public_functions, base_config, bases, conf
     g = generate_config(rng, public_functions, base_config, bases, config, prefix=prefix,
                         initial=initial)
     print("- LAUNCHING echidna-test in", prefix, "blacklisting [", ", ".join(g["filterFunctions"]),
-          "] with seqLen", g["seqLen"])
+          "] with seqLen", g["seqLen"], "and mutConsts ", g.setdefault("mutConsts", [1, 1, 1, 1]))
     os.mkdir(prefix)
     if not initial:
         os.mkdir(prefix + "/corpus")
