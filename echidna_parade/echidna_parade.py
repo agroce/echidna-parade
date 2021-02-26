@@ -198,7 +198,8 @@ def main():
         for contract in slither.contracts:
             for function in contract.functions:
                 fname = function.full_name
-                if fname.find(prop_prefix) == 0:
+                if function.is_constructor or (fname.find(prop_prefix) == 0):
+                    # Don't bother blacklisting constructors or echidna properties
                     continue
                 if function.visibility in ["public", "external"]:
                     public_functions.append(contract.name + "." + fname)
