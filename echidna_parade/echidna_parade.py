@@ -55,6 +55,8 @@ def generate_config(rng, public, basic, bases, config, prefix=None, initial=Fals
             new_config["mutConsts"].append(random.choice([0, 1, 2, 3, 1000, 2000]))
         if rng.random() < config.PdefaultLen:
             new_config["seqLen"] = random.randrange(config.minseqLen, config.maxseqLen)
+        if rng.random() < config.PdefaultDict:
+            new_config["dictFreq"] = random.randrange(5, 95) / 100.0
         if bases:
             base = rng.choose(bases)
             for k in base:
@@ -67,7 +69,7 @@ def make_echidna_process(prefix, rng, public_functions, base_config, bases, conf
     g = generate_config(rng, public_functions, base_config, bases, config, prefix=prefix,
                         initial=initial)
     print("- LAUNCHING echidna-test in", prefix, "blacklisting [", ", ".join(g["filterFunctions"]),
-          "] with seqLen", g["seqLen"], "and mutConsts ", g.setdefault("mutConsts", [1, 1, 1, 1]))
+          "] with seqLen", g["seqLen"], "dictFreq", g["dictFreq"], "and mutConsts ", g.setdefault("mutConsts", [1, 1, 1, 1]))
     os.mkdir(prefix)
     if not initial:
         os.mkdir(prefix + "/corpus")
@@ -127,6 +129,8 @@ def parse_args():
                         help='Maximum sequence length to use (default = 300).')
     parser.add_argument('--PdefaultLen', type=float, default=0.5,
                         help="Probability of using default/base length (default = 0.5)")
+    parser.add_argument('--PdefaultDict', type=float, default=0.5,
+                        help="Probability of using default/base dictionary usage frequency (default = 0.5)")
     parser.add_argument('--prob', type=float, default=0.5,
                         help='Probability of including functions in swarm config (default = 0.5).')
     parser.add_argument('--always', type=str, nargs='+', default=[],
@@ -182,6 +186,8 @@ def main():
     base_config["timeout"] = config.gen_time
     if "seqLen" not in base_config:
         base_config["seqLen"] = min(max(config.minseqLen, 100), config.maxseqLen)
+    if "dictFreq" not in base_config:
+        base_config["dictFreq"] = 0.40
     if config.corpus_dir is not None:
         base_config["corpusDir"] = config.corpus_dir
     else:
