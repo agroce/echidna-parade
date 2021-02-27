@@ -103,6 +103,8 @@ def parse_args():
                         help='FILES argument for echidna-test')
     parser.add_argument('--name', type=str, default="parade." + str(os.getpid()),
                         help='name for parade (directory where output files are placed)')
+    parser.add_argument('--resume', type=str, default=None,
+                        help='parade to resume (directory name with existing run)')
     parser.add_argument('--contract', type=str, default=None,
                         help='CONTRACT argument for echidna-test')
     parser.add_argument('--config', type=argparse.FileType('r'), default=None,
@@ -155,13 +157,20 @@ def main():
     config = make_config(parsed_args, parser)
     print("Starting echidna-parade with config={}".format(config))
 
-    if os.path.exists(config.name):
-        raise ValueError(config.name + ": refusing to overwrite existing directory!")
-    else:
-        os.mkdir(config.name)
+    if config.resume is None:
+        if os.path.exists(config.name):
+            raise ValueError(config.name + ": refusing to overwrite existing directory; perhaps you meant to --resume?")
+        else:
+            os.mkdir(config.name)
 
-    print()
-    print("Results will be written to:", os.path.abspath(config.name))
+        print()
+        print("Results will be written to:", os.path.abspath(config.name))
+    else:
+        print("Attempting to resume testing from", config.resume)
+        if not os.path.exists(config.resume):
+            raise ValueError("No parade directory found!")
+        if not (os.path.exists(config.resume + "/initial")):
+            raise ValueError("No initial run present, does not look like a parade directory!")
 
     rng = random.Random(config.seed)
 
@@ -176,7 +185,10 @@ def main():
     if config.corpus_dir is not None:
         base_config["corpusDir"] = config.corpus_dir
     else:
-        base_config["corpusDir"] = os.path.abspath(config.name + "/corpus")
+        if config.resume is None:
+            base_config["corpusDir"] = os.path.abspath(config.name + "/corpus")
+        else:
+            base_config["corpusDir"] = os.path.abspath(config.resume + "/corpus")
     base_config["stopOnFail"] = False
     base_config["coverage"] = True
     if not os.path.exists(base_config["corpusDir"]):
@@ -220,25 +232,35 @@ def main():
     start = time.time()
     elapsed = time.time() - start
 
-    print()
-    print("RUNNING INITIAL CORPUS GENERATION")
-    prefix = config.name + "/initial"
-    (pname, p, outf) = make_echidna_process(prefix, rng, public_functions, base_config, bases, config, initial=True)
-    p.wait()
-    outf.close()
-    if p.returncode != 0:
-        print(pname, "FAILED")
-        process_failures(failed_props, pname)
-        failures.append(pname + "/echidna.out")
+    if config.resume is None:
+        print()
+        print("RUNNING INITIAL CORPUS GENERATION")
+        prefix = config.name + "/initial"
+        (pname, p, outf) = make_echidna_process(prefix, rng, public_functions, base_config, bases, config, initial=True)
+        p.wait()
+        outf.close()
+        if p.returncode != 0:
+            print(pname, "FAILED")
+            process_failures(failed_props, pname)
+            failures.append(pname + "/echidna.out")
 
     generation = 1
+    if config.resume is None:
+        run_name = config.name
+    else:
+        run_name = config.resume
+        generation = 1
+        while os.path.exists(run_name + "/gen." + str(generation) + ".0"):
+            generation += 1
+        print("RESUMING PARADE AT GENERATION", generation)
+
     elapsed = time.time() - start
     while elapsed < config.timeout:
         print()
         print("SWARM GENERATION #" + str(generation) + ": ELAPSED TIME", round(elapsed, 2), "SECONDS /", config.timeout)
         ps = []
         for i in range(config.ncores):
-            prefix = config.name + "/gen." + str(generation) + "." + str(i)
+            prefix = run_name + "/gen." + str(generation) + "." + str(i)
             ps.append(make_echidna_process(prefix, rng, public_functions, base_config, bases, config))
         any_not_done = True
         gen_start = time.time()
