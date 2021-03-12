@@ -18,6 +18,8 @@ def generate_config(rng, public, basic, bases, config, prefix=None, initial=Fals
     new_config = dict(basic)
     new_config["filterFunctions"] = []
     new_config["filterBlacklist"] = True
+    if initial:
+        initial["timeout"] = config.initial_time
     basic_list = []
     blacklist = True
     if "filterFunctions" in basic:
@@ -120,6 +122,8 @@ def parse_args():
     parser.add_argument('--timeout', type=int, default=3600,
                         help='Total testing time (default = 3600)')
     parser.add_argument('--gen_time', type=int, default=300,
+                        help='Per-generation testing time (default = 300)')
+    parser.add_argument('--initial_time', type=int, default=300,
                         help='Per-generation testing time (default = 300)')
     parser.add_argument('--seed', type=int, default=None,
                         help='Random seed (default = None).')
