@@ -120,7 +120,7 @@ def parse_args():
     parser.add_argument('--corpus_dir', type=os.path.abspath, default=None,
                         help='Directory to store the echidna-parade corpus (useful when existing corpus available)')
     parser.add_argument('--timeout', type=int, default=3600,
-                        help='Total testing time (default = 3600)')
+                        help='Total testing time, use -1 for no timeout (default = 3600)')
     parser.add_argument('--gen_time', type=int, default=300,
                         help='Per-generation testing time (default = 300)')
     parser.add_argument('--initial_time', type=int, default=300,
@@ -265,9 +265,10 @@ def main():
         print("RESUMING PARADE AT GENERATION", generation)
 
     elapsed = time.time() - start
-    while elapsed < config.timeout:
+    while (config.timeout == -1) or (elapsed < config.timeout):
         print()
-        print("SWARM GENERATION #" + str(generation) + ": ELAPSED TIME", round(elapsed, 2), "SECONDS /", config.timeout)
+        print("SWARM GENERATION #" + str(generation) + ": ELAPSED TIME", round(elapsed, 2), "SECONDS",
+              ("/ " + str(config.timeout)) if config.timeout != -1 else "")
         ps = []
         for i in range(config.ncores):
             prefix = run_name + "/gen." + str(generation) + "." + str(i)
