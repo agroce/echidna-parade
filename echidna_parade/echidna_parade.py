@@ -14,12 +14,16 @@ import time
 import yaml
 
 
-def generate_config(rng, public, basic, bases, config, prefix=None, initial=False):
+def generate_config(rng, public, basic, bases, config, prefix=None, initial=False, coverage=False):
     new_config = dict(basic)
     new_config["filterFunctions"] = []
     new_config["filterBlacklist"] = True
     if initial:
         new_config["timeout"] = config.initial_time
+    if coverage:
+        new_config["timeout"] = 360000
+        corpus_count = len(glob.glob(new_config["corpusDir"] + "/coverage/*.txt"))
+        new_config["testLimit"] = corpus_count * config.maxseqLen
     basic_list = []
     blacklist = True
     if "filterFunctions" in basic:
@@ -34,22 +38,22 @@ def generate_config(rng, public, basic, bases, config, prefix=None, initial=Fals
                 continue
             if f in basic_list:
                 excluded.append(f)
-            elif (not initial) and (rng.random() > config.prob):
+            elif (not (initial or coverage)) and (rng.random() > config.prob):
                 excluded.append(f)
         else:
             if f in config.always:
                 continue
             if f in basic_list:
-                if (not initial) and (rng.random() <= config.prob):
+                if (not (initial or coverage)) and (rng.random() <= config.prob):
                     excluded.append(f)
             else:
                 excluded.append(f)
     if (len(excluded) == len(public)) and (len(public) > 0):
         # This should be quite rare unless you have very few functions or a very low config.prob!
         print("Degenerate blacklist configuration, trying again...")
-        return generate_config(rng, public, basic, bases, config, prefix, initial)
+        return generate_config(rng, public, basic, bases, config, prefix, initial, coverage)
     new_config["filterFunctions"] = excluded
-    if not initial:
+    if not (initial or coverage):
         new_config["corpusDir"] = "corpus"
         new_config["mutConsts"] = []
         for i in range(4):
@@ -67,13 +71,16 @@ def generate_config(rng, public, basic, bases, config, prefix=None, initial=Fals
     return new_config
 
 
-def make_echidna_process(prefix, rng, public_functions, base_config, bases, config, initial=False):
+def make_echidna_process(prefix, rng, public_functions, base_config, bases, config, initial=False, coverage=False):
     g = generate_config(rng, public_functions, base_config, bases, config, prefix=prefix,
-                        initial=initial)
+                        initial=initial, coverage=coverage)
     print("- LAUNCHING echidna-test in", prefix, "blacklisting [", ", ".join(g["filterFunctions"]),
           "] with seqLen", g["seqLen"], "dictFreq", g["dictFreq"], "and mutConsts ", g.setdefault("mutConsts", [1, 1, 1, 1]))
-    os.mkdir(prefix)
-    if not initial:
+    try:
+        os.mkdir(prefix)
+    except OSError:
+        pass
+    if not (initial or coverage):
         os.mkdir(prefix + "/corpus")
         os.mkdir(prefix + "/corpus/coverage")
         for f in glob.glob(base_config["corpusDir"] + "/coverage/*.txt"):
@@ -188,6 +195,7 @@ def main():
         if key not in ["timeout", "testLimit", "stopOnFail", "corpusDir", "coverage"]:
             base_config[key] = y[key]
     base_config["timeout"] = config.gen_time
+    base_config["testLimit"] = 1000000000 # basically infinite, use timeout to control
     if "seqLen" not in base_config:
         base_config["seqLen"] = min(max(config.minseqLen, 100), config.maxseqLen)
     if "dictFreq" not in base_config:
@@ -309,6 +317,24 @@ def main():
         elapsed = time.time() - start
         generation += 1
     print("DONE!")
+    print("RUNNING FINAL COVERAGE PASS...")
+    try:
+        os.remove(glob.glob(base_config["corpusDir"] + "/covered.*.txt")[0])
+    except IndexError:
+        pass
+    start = time.time()
+    if config.resume is None:
+        prefix = config.name + "/coverage"
+    else:
+        prefix = config.resume + "/coverage"
+    (pname, p, outf) = make_echidna_process(prefix, rng, public_functions, base_config, bases, config, initial=True, coverage=True)
+    p.wait()
+    outf.close()
+    if p.returncode != 0:
+        print(pname, "FAILED")
+        process_failures(failed_props, pname)
+        failures.append(pname + "/echidna.out")
+    print("COVERAGE PASS TOOK", round(time.time()-start, 2), "SECONDS")
     print()
     if len(failures) == 0:
         print("NO FAILURES")
