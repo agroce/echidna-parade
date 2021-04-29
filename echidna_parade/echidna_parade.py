@@ -190,10 +190,11 @@ def main():
     rng = random.Random(config.seed)
 
     base_config = {}
-    y = yaml.safe_load(config.config)
-    for key in y:
-        if key not in ["timeout", "testLimit", "stopOnFail", "corpusDir", "coverage"]:
-            base_config[key] = y[key]
+    if config.config is not None:
+        y = yaml.safe_load(config.config)
+        for key in y:
+            if key not in ["timeout", "testLimit", "stopOnFail", "corpusDir", "coverage"]:
+                base_config[key] = y[key]
     base_config["timeout"] = config.gen_time
     base_config["testLimit"] = 1000000000 # basically infinite, use timeout to control
     if "seqLen" not in base_config:
