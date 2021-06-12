@@ -146,6 +146,10 @@ def parse_args():
                         help='Probability of including functions in swarm config (default = 0.5).')
     parser.add_argument('--always', type=str, nargs='+', default=[],
                         help='functions to ALWAYS include in swarm configurations')
+    parser.add_argument('--noSlither', action='store_true',
+                        help='Do not run Slither (mostly for Vyper contracts, which Slither cannot handle)')
+    parser.add_argument('--functions', type=str, nargs='+', default=[],
+                        help='Alternative way to specify ABI for functions, when Slither cannot be used.')
     parsed_args = parser.parse_args(sys.argv[1:])
     return (parsed_args, parser)
 
@@ -229,17 +233,24 @@ def main():
     for f in config.files:
         if not os.path.exists(f):
             raise ValueError('Specified file ' + f + ' does not exist!')
-        slither = Slither(f)
-        for contract in slither.contracts:
-            for function in contract.functions_entry_points:
-                if not function.is_implemented:
-                    continue
-                fname = function.full_name
-                if function.is_constructor or (fname.find(prop_prefix) == 0):
-                    # Don't bother blacklisting constructors or echidna properties
-                    continue
-                if function.visibility in ["public", "external"]:
-                    public_functions.append(contract.name + "." + fname)
+        if not config.noSlither:
+            slither = Slither(f)
+            for contract in slither.contracts:
+                if ("multi-abi" not in base_config or not base_config["multi-abi"]):
+                    if config.contract is not None: # if you don't tell us which contract, no pruning
+                        if contract.name != config.contract:
+                            continue
+                for function in contract.functions_entry_points:
+                    if not function.is_implemented:
+                        continue
+                    fname = function.full_name
+                    if function.is_constructor or (fname.find(prop_prefix) == 0):
+                        # Don't bother blacklisting constructors or echidna properties
+                        continue
+                    if function.visibility in ["public", "external"]:
+                        public_functions.append(contract.name + "." + fname)
+
+    public_functions.extend(config.functions)
 
     print("Identified", len(public_functions), "public and external functions:", ", ".join(public_functions))
     if len(public_functions) == 0:
