@@ -36,7 +36,7 @@ Identified 14 public functions: push_1, pop_1, double, plus5, halve, decimate, e
 RUNNING INITIAL CORPUS GENERATION
 - LAUNCHING echidna-test in parade.82538/initial blacklisting [  ] with seqLen 100
 parade.82538/initial FAILED
-NEW FAILURE: assertion in test_long_8: failed!💥  
+NEW FAILURE: assertion in test_long_8: failed!
 
 SWARM GENERATION #1: ELAPSED TIME 38.62 SECONDS / 120
 - LAUNCHING echidna-test in parade.82538/gen.1.0 blacklisting [ halve, decimate, empty3 ] with seqLen 100
@@ -48,8 +48,8 @@ SWARM GENERATION #1: ELAPSED TIME 38.62 SECONDS / 120
 - LAUNCHING echidna-test in parade.82538/gen.1.6 blacklisting [ pop_1, decimate, empty2 ] with seqLen 100
 - LAUNCHING echidna-test in parade.82538/gen.1.7 blacklisting [ pop_1, double, halve, turn_off_length_checking, test_long_8 ] with seqLen 86
 parade.82538/gen.1.2 FAILED
-NEW FAILURE: assertion in test_long_64: failed!💥  
-NEW FAILURE: assertion in test_long_128: failed!💥  
+NEW FAILURE: assertion in test_long_64: failed!
+NEW FAILURE: assertion in test_long_128: failed!
 parade.82538/gen.1.0 FAILED
 parade.82538/gen.1.1 FAILED
 parade.82538/gen.1.4 FAILED
@@ -78,15 +78,15 @@ SOME TESTS FAILED
 
 Property results:
 ========================================
-assertion in test_long_8: failed!💥  
+assertion in test_long_8: failed!
 FAILED 8 TIMES
 See: parade.82538/initial/echidna.out, parade.82538/gen.1.2/echidna.out, parade.82538/gen.1.0/echidna.out, parade.82538/gen.1.4/echidna.out, parade.82538/gen.1.6/echidna.out, parade.82538/gen.2.3/echidna.out, parade.82538/gen.2.7/echidna.out, parade.82538/gen.2.0/echidna.out
 ========================================
-assertion in test_long_64: failed!💥  
+assertion in test_long_64: failed!
 FAILED 9 TIMES
 See: parade.82538/gen.1.2/echidna.out, parade.82538/gen.2.4/echidna.out, parade.82538/gen.2.3/echidna.out, parade.82538/gen.2.7/echidna.out, parade.82538/gen.2.0/echidna.out, parade.82538/gen.2.1/echidna.out, parade.82538/gen.2.5/echidna.out, parade.82538/gen.2.2/echidna.out, parade.82538/gen.2.6/echidna.out
 ========================================
-assertion in test_long_128: failed!💥  
+assertion in test_long_128: failed!
 FAILED 11 TIMES
 See: parade.82538/gen.1.2/echidna.out, parade.82538/gen.1.0/echidna.out, parade.82538/gen.1.1/echidna.out, parade.82538/gen.2.4/echidna.out, parade.82538/gen.2.3/echidna.out, parade.82538/gen.2.7/echidna.out, parade.82538/gen.2.0/echidna.out, parade.82538/gen.2.1/echidna.out, parade.82538/gen.2.5/echidna.out, parade.82538/gen.2.2/echidna.out, parade.82538/gen.2.6/echidna.out
 ```
