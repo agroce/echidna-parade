@@ -6,7 +6,7 @@ It runs Echidna instances in parallel, and uses two basic ideas derived from my 
 
 - test length matters (https://agroce.github.io/ase08.pdf)
 
-In particular, after an initial run to generate low-hanging-fruit easy pickings in terms of coverage, future runs will consist of a number of parallel runs (determined by an --ncores argument or however many cores Python thinks you have!) where each run randomly blacklists some functions (if you have a blacklist already, it's respected and added to), and the sequence length varies, by default between 10 and 300, with a bias towards using the default sequence length of 100 or whatever length you specified.
+In particular, after an initial run to generate low-hanging-fruit easy pickings in terms of coverage, future runs will consist of a number of parallel runs (determined by an --ncores argument or however many cores Python thinks you have) where each run randomly omits some functions (if you have a list already, it's respected and added to), and the sequence length and search strategy are also varied.
 
 Usage is almost like Echidna; in fact if you just use the same arguments as to Echidna, it'll probably work.  E.g.,
 
