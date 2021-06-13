@@ -16,6 +16,8 @@ Usage is almost like Echidna; in fact if you just use the same arguments as to E
 
 will likely do something reasonable.  By default "generations" of testing are 5 minutes in length, and the testing runs for an hour.
 
+Our [ISSTA tool paper](https://agroce.github.io/issta21.pdf) explains more about the rationale and effectiveness of echidna-parade.
+
 -----------
 
 Try out the example in the 'examples' directory.  Compare:
