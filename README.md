@@ -27,6 +27,6 @@ Try out the example in the 'examples' directory.  Compare:
 vs. what you can get with some knowledge of which functions not to omit from tests, and the same 120 seconds of testing with fast swarm generations:
 
 ```
-echidna-parade justlen.sol --config config.yaml --contract TEST --timeout 120 --gen_time 30 --ncores 8 --always "TEST.turn_on_length_checking()" "TEST.push_1()" "TEST.plus5()" "TEST.test_long_64()" "TEST.test_long_128()"
+> echidna-parade justlen.sol --config config.yaml --contract TEST --timeout 120 --initial_time 30 --gen_time 30 --ncores 8 --always "TEST.turn_on_length_checking()" "TEST.push_1()" "TEST.plus5()" "TEST.test_long_64()" "TEST.test_long_128()"
 ```
 
