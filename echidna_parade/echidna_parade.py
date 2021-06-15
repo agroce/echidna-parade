@@ -147,9 +147,11 @@ def parse_args():
     parser.add_argument('--always', type=str, nargs='+', default=[],
                         help='functions to ALWAYS include in swarm configurations')
     parser.add_argument('--noSlither', action='store_true',
-                        help='Do not run Slither (mostly for Vyper contracts, which Slither cannot handle)')
+                        help='Do not run Slither (mostly for Vyper contracts, which Slither cannot handle).')
     parser.add_argument('--functions', type=str, nargs='+', default=[],
                         help='Alternative way to specify ABI for functions, when Slither cannot be used.')
+    parser.add_argument('--wait', action='store_true',
+                        help='Do not kill echidna subprocesses; just wait for termination.  Useful for huge contracts.')
     parsed_args = parser.parse_args(sys.argv[1:])
     return (parsed_args, parser)
 
@@ -315,8 +317,8 @@ def main():
             for d in done:
                 ps.remove(d)
             gen_elapsed = time.time() - gen_start
-            if gen_elapsed > (config.gen_time + 30):  # full 30 second fudge factor here!
-                print("Generation still running after timeout!")
+            if (not config.wait) and (gen_elapsed > (config.gen_time + 60)):  # full 60 second fudge factor here!
+                print("Generation still running after timeout!  Killing echidna...")
                 for (pname, p, outf) in ps:
                     outf.close()
                     for f in glob.glob(pname + "/corpus/coverage/*.txt"):

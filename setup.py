@@ -4,7 +4,7 @@ from setuptools import setup, Extension
 
 setup(
     name='echidna-parade',
-    version='0.1.2',
+    version='0.1.3',
     description='Meta-tool to test a contract with various configs, using Echidna processes ("parade" is the proper name for a group of echidna)',
     long_description_content_type="text/markdown",    
     long_description=open('README.md').read(),
