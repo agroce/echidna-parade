@@ -1,3 +1,14 @@
+*****
+
+The echidna-parade tool has been officially "adopted" by Trail of Bits.  The official repo and current verion is at:
+
+https://github.com/crytic/echidna-parade
+
+Thanks!
+
+*****
+
+
 This is an experimental script that uses configuration variance and a common corpus to try to throughly test a smart contract (or multiple contracts) with the Echidna smart-contract fuzzer (https://github.com/crytic/echidna).
 
 It runs Echidna instances in parallel, and uses two basic ideas derived from my research:
