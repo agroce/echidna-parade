@@ -1,8 +1,8 @@
 *****
 
-The echidna-parade tool has been officially "adopted" by Trail of Bits.  The official repo/current version is at:
+# **The echidna-parade tool has been officially "adopted" by Trail of Bits.  The official repo/current version is at:**
 
-https://github.com/crytic/echidna-parade
+# **https://github.com/crytic/echidna-parade**
 
 Thanks!
 
